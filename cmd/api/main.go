@@ -7,13 +7,26 @@ import (
 	"github.com/mathiuskitchens/whoop-xp/internal/models"
 	"github.com/mathiuskitchens/whoop-xp/internal/spiritual"
 	"github.com/mathiuskitchens/whoop-xp/internal/whoop"
+	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 var jwtSecret = []byte("your-super-secret-key")
 
 func main() {
+
+	err := godotenv.Load("../../.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	clientID := os.Getenv("WHOOP_CLIENT_ID")
+	log.Println("Client ID:", clientID)
+
 	db := database.Connect()
 	defer db.Close()
 
@@ -135,6 +148,11 @@ func main() {
 
 		c.JSON(200, gin.H{"token": tokenString})
 	})
+
+	whoopGroup := r.Group("/whoop")
+	{
+		whoopGroup.GET("/auth", whoop.StartAuthHandler(db))
+	}
 
 	// Start server...
 	r.Run(":8080")
